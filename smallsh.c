@@ -8,9 +8,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #define INPUT_LENGTH 2048
-#define MAX_ARGS		 512
+#define MAX_ARGS 512
 
 
 struct command_line
@@ -50,14 +51,30 @@ struct command_line *parse_input()
 	return curr_command;
 }
 
-int main()
-{
-	struct command_line *curr_command;
+int main() {
+    struct command_line *curr_command;
 
-	while(true)
-	{
-		curr_command = parse_input();
+    while (true) {
+        // Get the user input and parse it into a command structure
+        curr_command = parse_input(); 
 
-	}
-	return EXIT_SUCCESS;
+        // Open the current directory
+        DIR *currDir = opendir(".");
+        if (currDir == NULL) {
+            perror("Unable to open directory");
+            exit(EXIT_FAILURE);
+        }
+
+        struct dirent *entry;
+
+        // Read and print each entry in the directory
+        while ((entry = readdir(currDir)) != NULL) {
+            printf("%s \n", entry->d_name);
+        }
+
+        // Close the directory
+        closedir(currDir);
+    }
+
+    return EXIT_SUCCESS;
 }
