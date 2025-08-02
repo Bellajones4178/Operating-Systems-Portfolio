@@ -1,9 +1,4 @@
-/**
- * A sample program for parsing a command line. If you find it useful,
- * feel free to adapt this code for Assignment 4.
- * Do fix memory leaks and any additional issues you find.
- */
-
+//Sample file used as base//
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -37,7 +32,9 @@ struct command_line *parse_input()
 	// Tokenize the input
 	char *token = strtok(input, " \n");
 	while(token){
-		if(!strcmp(token,"<")){
+		if (token[0] == '#') {
+			break;
+		} else if (!strcmp(token,"<")){
 			curr_command->input_file = strdup(strtok(NULL," \n"));
 		} else if(!strcmp(token,">")){
 			curr_command->output_file = strdup(strtok(NULL," \n"));
@@ -56,25 +53,23 @@ int main() {
 
     while (true) {
         // Get the user input and parse it into a command structure
-        curr_command = parse_input(); 
+        curr_command = parse_input(); 	
 
-        // Open the current directory
-        DIR *currDir = opendir(".");
-        if (currDir == NULL) {
-            perror("Unable to open directory");
-            exit(EXIT_FAILURE);
+        if (curr_command->argc > 0 && strcmp(curr_command->argv[0], "ls") == 0) {
+            DIR *currDir = opendir(".");
+            if (currDir == NULL) {
+                perror("Unable to open directory");
+                exit(EXIT_FAILURE);
+            }
+
+            struct dirent *entry;
+            while ((entry = readdir(currDir)) != NULL) {
+                printf("%s\n", entry->d_name);
+            }
+            closedir(currDir);
         }
-
-        struct dirent *entry;
-
-        // Read and print each entry in the directory
-        while ((entry = readdir(currDir)) != NULL) {
-            printf("%s \n", entry->d_name);
-        }
-
-        // Close the directory
-        closedir(currDir);
-    }
+	
+	}
 
     return EXIT_SUCCESS;
 }
