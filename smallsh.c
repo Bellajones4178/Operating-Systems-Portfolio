@@ -82,6 +82,7 @@ int main() {
                 exit(1);
             } else {
                 waitpid(spawnpid, &last_fg_status, 0);
+               fflush(stdout);
             }
         }
     }
