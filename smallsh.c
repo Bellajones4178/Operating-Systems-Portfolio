@@ -10,8 +10,11 @@
 
 #define INPUT_LENGTH 2048
 #define MAX_ARGS 512
+#define BG_PROC 100
 
 int last_fg_status = 0;
+pid_t bg_pids[BG_PROC];
+int bg_num = 0;
 
 
 struct command_line
@@ -104,10 +107,41 @@ int main() {
                 perror("execvp");
                 exit(1);
             } else {
-                waitpid(spawnpid, &last_fg_status, 0);
+                if (curr_command->is_bg) {
+                    printf("background pid is %d\n", spawnpid);
+                    fflush(stdout);
+                    if (bg_num < BG_PROC) {
+                        bg_pids[bg_num++] = spawnpid;
+                    }
+                } else {
+                    waitpid(spawnpid, &last_fg_status, 0);
+                }
+
             }
         }
-    }
+            // Process Background Proesses 
+        for (int i = 0; i < bg_num;) {
+        int status;
+        pid_t result = waitpid(bg_pids[i], &status, WNOHANG);
+        if (result > 0) {
+            if (WIFEXITED(status)) {
+                printf("background pid %d is done: exit value %d\n", result, WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                printf("background pid %d is done: terminated by signal %d\n", result, WTERMSIG(status));
+            }
+            fflush(stdout);
 
+            // Remove from list
+            for (int j = i; j < bg_num - 1; j++) {
+                bg_pids[j] = bg_pids[j + 1];
+            }
+            bg_num--;
+        } else {
+                i++;
+            }
+        }
+
+    } 
+    
     return 0;
 }
