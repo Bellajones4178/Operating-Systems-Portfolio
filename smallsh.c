@@ -49,6 +49,7 @@ struct command_line *parse_input()
 		}
 		token=strtok(NULL," \n");
 	}
+	curr_command->argv[curr_command->argc] = NULL;
 	return curr_command;
 }
 
