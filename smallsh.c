@@ -78,15 +78,18 @@ int main() {
         } else {
             pid_t spawnpid = fork();
             if (spawnpid == 0) {
-                if (curr_command->output_file != NULL) {
-                    int fd = open(curr_command->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                // Input redirection
+                if (curr_command->input_file != NULL) {
+                    int fd = open(curr_command->input_file, O_RDONLY);
                     if (fd == -1) {
-                        perror("output redirection");
+                        perror("input redirection");
                         exit(1);
                     }
-                    dup2(fd, STDOUT_FILENO);
+                    dup2(fd, STDIN_FILENO);
                     close(fd);
                 }
+
+                // Output redirection
                 if (curr_command->output_file != NULL) {
                     int fd = open(curr_command->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                     if (fd == -1) {
