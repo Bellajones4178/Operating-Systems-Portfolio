@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #define INPUT_LENGTH 2048
 #define MAX_ARGS 512
@@ -52,24 +53,31 @@ int main() {
     struct command_line *curr_command;
 
     while (true) {
-        // Get the user input and parse it into a command structure
-        curr_command = parse_input(); 	
+        curr_command = parse_input();
 
-        if (curr_command->argc > 0 && strcmp(curr_command->argv[0], "ls") == 0) {
-            DIR *currDir = opendir(".");
-            if (currDir == NULL) {
-                perror("Unable to open directory");
-                exit(EXIT_FAILURE);
-            }
-
-            struct dirent *entry;
-            while ((entry = readdir(currDir)) != NULL) {
-                printf("%s\n", entry->d_name);
-            }
-            closedir(currDir);
+        if (curr_command->argc == 0) {
+            continue;
         }
-	
-	}
+        if (strcmp(curr_command->argv[0], "exit") == 0) {
+            exit(0);
+        } else if (strcmp(curr_command->argv[0], "cd") == 0) {
+            char *target_dir = curr_command->argc == 1 ? getenv("HOME") : curr_command->argv[1];
+            chdir(target_dir);
+        } else {
+            DIR *currDir = opendir(".");
+            if (curr_command->argc > 0 && strcmp(curr_command->argv[0], "ls") == 0) {
+                if (currDir == NULL) {
+                    perror("Unable to open directory");
+                    exit(EXIT_FAILURE);
+                }
+                struct dirent *entry;
+                while ((entry = readdir(currDir)) != NULL) {
+                    printf("%s\n", entry->d_name);
+                }
+                closedir(currDir);
+            }
+        }
+    }
 
     return EXIT_SUCCESS;
 }
