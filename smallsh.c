@@ -77,12 +77,21 @@ int main() {
         } else {
             pid_t spawnpid = fork();
             if (spawnpid == 0) {
+                if (curr_command->output_file != NULL) {
+                    int fd = open(curr_command->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                    if (fd == -1) {
+                        perror("output redirection");
+                        exit(1);
+                    }
+                    dup2(fd, STDOUT_FILENO);
+                    close(fd);
+                }
+
                 execvp(curr_command->argv[0], curr_command->argv);
                 perror("execvp");
                 exit(1);
             } else {
                 waitpid(spawnpid, &last_fg_status, 0);
-               fflush(stdout);
             }
         }
     }
