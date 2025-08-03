@@ -87,6 +87,15 @@ int main() {
                     dup2(fd, STDOUT_FILENO);
                     close(fd);
                 }
+                if (curr_command->output_file != NULL) {
+                    int fd = open(curr_command->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                    if (fd == -1) {
+                        perror("output redirection");
+                        exit(1);
+                    }
+                    dup2(fd, STDOUT_FILENO);
+                    close(fd);
+                }
 
                 execvp(curr_command->argv[0], curr_command->argv);
                 perror("execvp");
