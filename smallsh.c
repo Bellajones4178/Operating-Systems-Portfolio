@@ -61,6 +61,29 @@ int main() {
     struct command_line *curr_command;
 
     while (true) {
+        // Run background proceses
+        for (int i = 0; i < bg_num;) {
+            int status;
+            pid_t result = waitpid(bg_pids[i], &status, WNOHANG);
+            if (result > 0) {
+                if (WIFEXITED(status)) {
+                    printf("background pid %d is done: exit value %d\n", result, WEXITSTATUS(status));
+                } else if (WIFSIGNALED(status)) {
+                    printf("background pid %d is done: terminated by signal %d\n", result, WTERMSIG(status));
+                }
+                fflush(stdout);
+
+                // Remove from list
+                for (int j = i; j < bg_num - 1; j++) {
+                    bg_pids[j] = bg_pids[j + 1];
+                }
+                bg_num--;
+            } else {
+                i++;
+            }
+        }
+
+        // Get user input and process command
         curr_command = parse_input();
 
         if (curr_command->argc == 0) {
@@ -81,7 +104,7 @@ int main() {
         } else {
             pid_t spawnpid = fork();
             if (spawnpid == 0) {
-                // Input redirection
+                // Redirection of Input
                 if (curr_command->input_file != NULL) {
                     int fd = open(curr_command->input_file, O_RDONLY);
                     if (fd == -1) {
@@ -92,7 +115,7 @@ int main() {
                     close(fd);
                 }
 
-                // Output redirection
+                // Redirection of Output
                 if (curr_command->output_file != NULL) {
                     int fd = open(curr_command->output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
                     if (fd == -1) {
@@ -116,32 +139,9 @@ int main() {
                 } else {
                     waitpid(spawnpid, &last_fg_status, 0);
                 }
-
             }
         }
-            // Process Background Proesses 
-        for (int i = 0; i < bg_num;) {
-        int status;
-        pid_t result = waitpid(bg_pids[i], &status, WNOHANG);
-        if (result > 0) {
-            if (WIFEXITED(status)) {
-                printf("background pid %d is done: exit value %d\n", result, WEXITSTATUS(status));
-            } else if (WIFSIGNALED(status)) {
-                printf("background pid %d is done: terminated by signal %d\n", result, WTERMSIG(status));
-            }
-            fflush(stdout);
+    }
 
-            // Remove from list
-            for (int j = i; j < bg_num - 1; j++) {
-                bg_pids[j] = bg_pids[j + 1];
-            }
-            bg_num--;
-        } else {
-                i++;
-            }
-        }
-
-    } 
-    
     return 0;
 }
